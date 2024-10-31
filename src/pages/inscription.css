@@ -1,0 +1,60 @@
+/* Style général de la page d'inscription */
+.inscription-page {
+    background-color: #f8f2fc; /* Couleur douce inspirée du fond du logo */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Titre de l'inscription */
+  .inscription-title {
+    color: #9b5de5; /* Violet doux, correspondant aux couleurs du logo */
+    font-weight: bold;
+    font-size: 2.5rem;
+  }
+  
+  /* Formulaire d'inscription */
+  .inscription-form {
+    background-color: #ffffff; /* Couleur blanche pour contraster */
+    border-color: #c4a7e7; /* Légère bordure violette */
+    padding: 30px;
+    border-radius: 20px;
+  }
+  
+  /* Champs du formulaire */
+  .form-control-custom {
+    background-color: #f1ebff; /* Fond légèrement violet clair */
+    border: 1px solid #c4a7e7; /* Bordure inspirée du logo */
+    border-radius: 8px;
+  }
+  
+  /* Bouton d'inscription */
+  .inscription-button {
+    background-color: #9b5de5; /* Couleur principale du logo */
+    border-color: #9b5de5;
+    color: white;
+  }
+  
+  .inscription-button:hover {
+    background-color: #7f3dbb; /* Couleur plus foncée au hover */
+    border-color: #7f3dbb;
+  }
+  
+  /* Lien de redirection */
+  .inscription-link {
+    color: #6a3ea1; /* Lien dans une nuance violette douce */
+  }
+  
+  .inscription-link:hover {
+    text-decoration: underline;
+    color: #52267a; /* Survol plus foncé */
+  }
+  
+  /* Image d'illustration */
+  .inscription-image {
+    max-width: 250px;
+    border-radius: 50%; /* Ajoute un effet circulaire à l'image */
+  }
+  

@@ -1,0 +1,10 @@
+/* Sidebar.css */
+.sidebar-icon {
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .sidebar-icon:hover {
+    color: #e1e8ed;
+  }
+  

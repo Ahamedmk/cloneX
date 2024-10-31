@@ -1,0 +1,22 @@
+body {
+    font-family: 'Roboto', sans-serif;
+  }
+  /* App.css */
+body {
+    background-color: #f5f8fa;
+  }
+  
+  .card {
+    border: none;
+    border-bottom: 1px solid #e1e8ed;
+    border-radius: 0;
+  }
+  
+  .card-body {
+    padding: 10px;
+  }
+  
+  .tweet-list .card:last-child {
+    border-bottom: none;
+  }
+  

@@ -1,0 +1,72 @@
+/* Style général de la page de connexion */
+.connection-page {
+    background-color: #f8f2fc; /* Fond violet clair */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Titre de la connexion */
+  .connection-title {
+    color: #9b5de5; /* Violet doux correspondant au logo */
+    font-weight: bold;
+    font-size: 2.5rem;
+  }
+  
+  /* Formulaire de connexion */
+  .connection-form {
+    background-color: #ffffff; /* Fond blanc pour contraster */
+    border-color: #c4a7e7; /* Légère bordure violette */
+    padding: 30px;
+    border-radius: 20px;
+  }
+  
+  /* Champs du formulaire */
+  .form-control-custom {
+    background-color: #f1ebff; /* Fond légèrement violet clair */
+    border: 1px solid #c4a7e7; /* Bordure inspirée des couleurs du logo */
+    border-radius: 8px;
+  }
+  
+  /* Bouton de connexion */
+  .connection-button {
+    background-color: #9b5de5; /* Couleur principale du logo */
+    border-color: #9b5de5;
+    color: white;
+  }
+  
+  .connection-button:hover {
+    background-color: #7f3dbb; /* Couleur plus foncée au hover */
+    border-color: #7f3dbb;
+  }
+  
+  /* Bouton pour créer un compte */
+  .create-account-button {
+    background-color: #ff758f; /* Couleur rose clair */
+    border-color: #ff758f;
+    color: white;
+  }
+  
+  .create-account-button:hover {
+    background-color: #e75c75; /* Rose plus foncé au hover */
+    border-color: #e75c75;
+  }
+  
+  /* Lien de redirection */
+  .connection-link {
+    color: #6a3ea1; /* Lien dans une nuance violette douce */
+  }
+  
+  .connection-link:hover {
+    text-decoration: underline;
+    color: #52267a; /* Couleur violette plus foncée au survol */
+  }
+  
+  /* Image d'illustration */
+  .connection-image {
+    max-width: 250px;
+    border-radius: 50%; /* Effet circulaire sur l'image */
+  }
+  
