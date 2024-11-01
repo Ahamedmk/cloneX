@@ -1,8 +1,29 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+
 import { getAuth } from "firebase/auth";
-import { getDatabase } from "firebase/database"; // Import de Realtime Database
+import { getDatabase, ref, set, remove } from "firebase/database"; // Import de Realtime Database
 // Import the functions you need from the SDKs you need
+
+const suivreUtilisateur = async (followerId, followingId) => {
+  try {
+    const followRef = ref(db, `follows/${followerId}/${followingId}`);
+    await set(followRef, true);
+    console.log(`L'utilisateur ${followerId} suit maintenant ${followingId}`);
+  } catch (error) {
+    console.error("Erreur lors de l'abonnement :", error);
+  }
+};
+
+const desabonnerUtilisateur = async (followerId, followingId) => {
+  try {
+    const followRef = ref(db, `follows/${followerId}/${followingId}`);
+    await remove(followRef);
+    console.log(`L'utilisateur ${followerId} s'est désabonné de ${followingId}`);
+  } catch (error) {
+    console.error("Erreur lors du désabonnement :", error);
+  }
+};
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
