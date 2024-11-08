@@ -102,7 +102,10 @@ const AuthProvider = ({ children }) => {
       });
 
       const userRef = ref(db, `users/${userCredential.user.uid}`);
-      await set(userRef, { isSetupComplete: false }); // Initialisation de isSetupComplete à false lors de l'inscription
+      await set(userRef, { isSetupComplete: false,
+        username: username, // Ajoutez cette ligne pour enregistrer le nom d'utilisateur
+      email: email, // Enregistrer également l'email si nécessaire
+       }); // Initialisation de isSetupComplete à false lors de l'inscription
       setNewUser(true); // Indiquer que c'est un nouvel utilisateur
       return userCredential.user; // Retourner l'utilisateur pour la gestion ultérieure
     } catch (error) {
