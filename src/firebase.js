@@ -1,9 +1,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, set, remove } from "firebase/database"; // Import de Realtime Database
 // Import the functions you need from the SDKs you need
+
+
 
 const suivreUtilisateur = async (followerId, followingId) => {
   try {
@@ -39,7 +40,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); // Initialisation de Realtime Database
+const auth = getAuth(app);
 
-export const auth = getAuth(app);
+export {auth};
 export { db };
 export default app;

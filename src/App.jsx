@@ -73,7 +73,8 @@ function MainApp() {
   }
 
   if (user) {
-    console.log("Utilisateur connecté :", user.email);
+    console.log("Utilisateur connecté :", user.displayName
+    );
   } else {
     console.log("Aucun utilisateur connecté");
   }

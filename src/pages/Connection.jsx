@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import { useState, useContext } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useContext } from "react";
 import { AuthContext } from "../store/AuthProvider";
 
-import "./connection.css";  // Importer le fichier CSS
+import "./connection.css"; // Importer le fichier CSS
 
 export default function Connection() {
   const {
@@ -15,9 +14,9 @@ export default function Connection() {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const { loginUser, verifyUserSetup, loading } = useContext(AuthContext); // Chargement ajouté
+  const { loginUser, verifyUserSetup, loading } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [localLoading, setLocalLoading] = useState(false); // Gestion du chargement local
+  const [localLoading, setLocalLoading] = useState(false);
 
   const onSubmit = async (data) => {
     if (localLoading || loading) return;
@@ -26,14 +25,17 @@ export default function Connection() {
 
     try {
       console.log("Tentative de connexion avec", data.email);
-      const userCredential = await loginUser(data.email, data.password); // Connexion de l'utilisateur
+      const user = await loginUser(data.email, data.password); // Connexion de l'utilisateur
 
-      if (userCredential) {
-        console.log("Utilisateur connecté avec succès :", userCredential.user);
+      if (user) {
+        console.log("Utilisateur connecté avec succès :", user);
 
         // Vérifie si l'utilisateur a complété sa configuration
-        const isSetupComplete = await verifyUserSetup(userCredential.user);
-        console.log("Vérification de la configuration terminée :", isSetupComplete);
+        const isSetupComplete = await verifyUserSetup(user);
+        console.log(
+          "Vérification de la configuration terminée :",
+          isSetupComplete
+        );
 
         setLocalLoading(false);
 
@@ -73,7 +75,8 @@ export default function Connection() {
               {...register("email", {
                 required: true,
                 pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
+                  value:
+                    /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: "Renseignez une adresse valide.",
                 },
               })}
@@ -93,7 +96,8 @@ export default function Connection() {
                 required: true,
                 minLength: {
                   value: 8,
-                  message: "Le mot de passe doit contenir au moins 8 caractères.",
+                  message:
+                    "Le mot de passe doit contenir au moins 8 caractères.",
                 },
               })}
               className="form-control-custom"
@@ -109,12 +113,17 @@ export default function Connection() {
             className="w-100 connection-button"
             disabled={localLoading || loading}
           >
-            {localLoading || loading ? "Connexion en cours..." : "Se connecter"}
+            {localLoading || loading
+              ? "Connexion en cours..."
+              : "Se connecter"}
           </Button>
         </Form>
 
         <Link to="/inscription">
-          <Button variant="success" className="mx-auto mt-4 w-100 create-account-button">
+          <Button
+            variant="success"
+            className="mx-auto mt-4 w-100 create-account-button"
+          >
             Créer un compte
           </Button>
         </Link>

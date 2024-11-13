@@ -36,6 +36,11 @@ const AuthProvider = ({ children }) => {
   // Fonction pour vérifier si l'utilisateur a complété sa configuration
   const verifyUserSetup = useCallback(async (currentUser) => {
     try {
+
+      if (!currentUser) {
+        console.error("verifyUserSetup : currentUser est indéfini");
+        return false;
+      }
       const userRef = ref(db, `users/${currentUser.uid}`);
       const snapshot = await get(userRef);
 
@@ -81,14 +86,35 @@ const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, [verifyUserSetup]);
 
-  // Fonction pour déconnecter l'utilisateur
-  const logOut = () => {
-    setNewUser(false); // Réinitialiser l'état newUser lors de la déconnexion
-    return signOut(auth);
+  // 🛠️ **Fonction modifiée pour déconnecter l'utilisateur**
+  const logOut = async () => {
+    try {
+      if (auth.currentUser) {
+        // Mettre à jour le statut à "offline" avant de déconnecter
+        const userStatusDatabaseRef = ref(
+          db,
+          `/status/${auth.currentUser.uid}`
+        );
+        await set(userStatusDatabaseRef, {
+          state: "offline",
+          last_changed: Date.now(),
+        });
+        console.log("Statut mis à jour à 'offline' pour l'utilisateur :", auth.currentUser.uid);
+      }
+
+      setNewUser(false); // Réinitialiser l'état newUser lors de la déconnexion
+
+      // Déconnecter l'utilisateur
+      await signOut(auth);
+      console.log("Utilisateur déconnecté avec succès.");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+      throw error; // Lancer l'erreur pour qu'elle soit gérée dans le composant
+    }
   };
 
   // Fonction pour inscrire un utilisateur
-  const createUser = async (email, password,username) => {
+  const createUser = async (email, password, username) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -102,10 +128,11 @@ const AuthProvider = ({ children }) => {
       });
 
       const userRef = ref(db, `users/${userCredential.user.uid}`);
-      await set(userRef, { isSetupComplete: false,
-        username: username, // Ajoutez cette ligne pour enregistrer le nom d'utilisateur
-      email: email, // Enregistrer également l'email si nécessaire
-       }); // Initialisation de isSetupComplete à false lors de l'inscription
+      await set(userRef, {
+        isSetupComplete: false,
+        username: username, // Enregistrer le nom d'utilisateur
+        email: email, // Enregistrer également l'email si nécessaire
+      }); // Initialisation de isSetupComplete à false lors de l'inscription
       setNewUser(true); // Indiquer que c'est un nouvel utilisateur
       return userCredential.user; // Retourner l'utilisateur pour la gestion ultérieure
     } catch (error) {
@@ -122,10 +149,10 @@ const AuthProvider = ({ children }) => {
         email,
         password
       );
-      return userCredential.user; // Retourner `userCredential.user` pour un accès direct à l'utilisateur
+      return userCredential.user; // Retourner l'utilisateur
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
-      throw error; // Lancer l'erreur pour qu'elle soit gérée dans le composant
+      throw error;
     }
   };
 
