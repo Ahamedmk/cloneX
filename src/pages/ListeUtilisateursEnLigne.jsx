@@ -1,13 +1,40 @@
 import { useState, useEffect, useContext } from "react";
 import { db } from "../firebase";
-import { ref, onValue, get } from "firebase/database";
+import {ref, set, remove, onValue, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../store/AuthProvider";
 
 function ListeUtilisateursEnLigne() {
   const [utilisateursEnLigne, setUtilisateursEnLigne] = useState([]);
+  const [followingList, setFollowingList] = useState({});
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
+  // Fonction pour suivre un utilisateur
+  const suivreUtilisateur = async (uidUtilisateurSuivi) => {
+    const uidSuiveur = user.uid;
+
+    // Mettre à jour le nœud 'following' de l'utilisateur actuel
+    const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
+    await set(followingRef, true);
+
+    // Mettre à jour le nœud 'followers' de l'utilisateur suivi
+    const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
+    await set(followersRef, true);
+  };
+
+  // Fonction pour ne plus suivre un utilisateur
+  const nePlusSuivreUtilisateur = async (uidUtilisateurSuivi) => {
+    const uidSuiveur = user.uid;
+
+    // Supprimer du nœud 'following' de l'utilisateur actuel
+    const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
+    await remove(followingRef);
+
+    // Supprimer du nœud 'followers' de l'utilisateur suivi
+    const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
+    await remove(followersRef);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -17,6 +44,13 @@ function ListeUtilisateursEnLigne() {
     }
   
     console.log('Utilisateur connecté :', user.uid);
+
+    // Récupérer la liste des utilisateurs que l'utilisateur actuel suit
+    const followingRef = ref(db, `following/${user.uid}`);
+    onValue(followingRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      setFollowingList(data);
+    });
   
     const statusRef = ref(db, "status");
     const unsubscribe = onValue(statusRef, async (snapshot) => {
@@ -82,17 +116,40 @@ function ListeUtilisateursEnLigne() {
         <p>Aucun utilisateur en ligne.</p>
       ) : (
         <ul className="list-unstyled">
-          {utilisateursEnLigne.map((utilisateur) => (
-            <li key={utilisateur.uid}>
-              <button
-                className="btn btn-link"
-                onClick={() => afficherProfil(utilisateur.uid)}
-              >
-                {utilisateur.username || utilisateur.uid}
-                {utilisateur.uid === user.uid && " (Vous)"}
-              </button>
-            </li>
-          ))}
+          {utilisateursEnLigne.map((utilisateur) => {
+            const estSuivi = followingList[utilisateur.uid];
+
+            return (
+              <li key={utilisateur.uid}>
+                <button
+                  className="btn btn-link"
+                  onClick={() => afficherProfil(utilisateur.uid)}
+                >
+                  {utilisateur.username || utilisateur.uid}
+                  {utilisateur.uid === user.uid && " (Vous)"}
+                </button>
+                {utilisateur.uid !== user.uid && (
+                  <>
+                    {estSuivi ? (
+                      <button
+                        onClick={() => nePlusSuivreUtilisateur(utilisateur.uid)}
+                        className="btn btn-secondary"
+                      >
+                        Ne plus suivre
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => suivreUtilisateur(utilisateur.uid)}
+                        className="btn btn-primary"
+                      >
+                        Suivre
+                      </button>
+                    )}
+                  </>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
