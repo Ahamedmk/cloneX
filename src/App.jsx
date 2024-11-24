@@ -1,4 +1,4 @@
-import { useContext, Suspense, lazy,useEffect } from "react";
+import { useContext, Suspense, lazy, useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { db } from './firebase'; // Chemin vers votre configuration Firebase
 import { ref, onDisconnect, onValue, set } from 'firebase/database';
@@ -8,26 +8,32 @@ import { AuthContext } from "./store/AuthProvider";
 import AuthProvider from "./store/AuthProvider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Sidebar from "./components/Sidebar";
+import ListeUtilisateursEnLigne from "./pages/ListeUtilisateursEnLigne";
 
 // Lazy loading des composants
-const Home = lazy(() => import("./pages/Home"));
 const Inscription = lazy(() => import("./pages/Inscription"));
 const Connection = lazy(() => import("./pages/Connection"));
 const Main = lazy(() => import("./layouts/Main"));
 const ProfilUtilisateur = lazy(() => import("./pages/ProfilUtilisateur"));
-const Profil = lazy (() => import("./pages/ListeUtilisateursEnLigne") );
+const Profil = lazy(() => import("./pages/ListeUtilisateursEnLigne"));
+const Suivies = lazy(() => import("./pages/ListePersonnesSuivies"));
+const TweetBox = lazy(() => import("./components/TweetBox")); // Ajout de TweetBox
 
 export default function App() {
   return (
     <AuthProvider>
+      <div className="col-2 p-0">
+        <Sidebar />
+        </div>
       <MainApp />
+      
     </AuthProvider>
   );
 }
 
 function MainApp() {
   const { user, loading } = useContext(AuthContext);
-
 
   useEffect(() => {
     if (user) {
@@ -73,8 +79,7 @@ function MainApp() {
   }
 
   if (user) {
-    console.log("Utilisateur connecté :", user.displayName
-    );
+    console.log("Utilisateur connecté :", user.displayName);
   } else {
     console.log("Aucun utilisateur connecté");
   }
@@ -92,7 +97,15 @@ function MainApp() {
                 path: "/",
                 element: (
                   <Suspense fallback={<div>Chargement...</div>}>
-                    {user ? <Home /> : <Inscription />}
+                    {user ? <TweetBox mode="actu" /> : <Inscription />}
+                  </Suspense>
+                ),
+              },
+              {
+                path: "/abonnement",
+                element: (
+                  <Suspense fallback={<div>Chargement...</div>}>
+                    {user ? <TweetBox mode="abonnement" /> : <Inscription />}
                   </Suspense>
                 ),
               },
@@ -105,14 +118,6 @@ function MainApp() {
                 ),
               },
               {
-                path: "/profil/:uid",
-                element: (
-                  <Suspense fallback={<div>Chargement...</div>}>
-                    <Profil/>
-                  </Suspense>
-                ),
-              },
-              {
                 path: "/connection",
                 element: (
                   <Suspense fallback={<div>Chargement...</div>}>
@@ -121,10 +126,26 @@ function MainApp() {
                 ),
               },
               {
+                path: "/profil/:uid",
+                element: (
+                  <Suspense fallback={<div>Chargement...</div>}>
+                    <Profil />
+                  </Suspense>
+                ),
+              },
+              {
                 path: "/profil",
                 element: (
                   <Suspense fallback={<div>Chargement...</div>}>
                     <ProfilUtilisateur />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "/suivies",
+                element: (
+                  <Suspense fallback={<div>Chargement...</div>}>
+                    <Suivies />
                   </Suspense>
                 ),
               },
