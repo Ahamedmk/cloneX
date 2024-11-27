@@ -1,71 +1,42 @@
 import { useState, useEffect, useContext } from "react";
 import { db } from "../firebase";
-import {ref, set, remove, onValue, get } from "firebase/database";
+import { ref, onValue, set, remove, get } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../store/AuthProvider";
+import { toast } from 'react-toastify';
 
 function ListeUtilisateursEnLigne() {
   const [utilisateursEnLigne, setUtilisateursEnLigne] = useState([]);
-  const [followingList, setFollowingList] = useState({});
+  const [followingList, setFollowingList] = useState([]);
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-
-  // Fonction pour suivre un utilisateur
-  const suivreUtilisateur = async (uidUtilisateurSuivi) => {
-    const uidSuiveur = user.uid;
-
-    // Mettre à jour le nœud 'following' de l'utilisateur actuel
-    const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
-    await set(followingRef, true);
-
-    // Mettre à jour le nœud 'followers' de l'utilisateur suivi
-    const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
-    await set(followersRef, true);
-  };
-
-  // Fonction pour ne plus suivre un utilisateur
-  const nePlusSuivreUtilisateur = async (uidUtilisateurSuivi) => {
-    const uidSuiveur = user.uid;
-
-    // Supprimer du nœud 'following' de l'utilisateur actuel
-    const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
-    await remove(followingRef);
-
-    // Supprimer du nœud 'followers' de l'utilisateur suivi
-    const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
-    await remove(followersRef);
-  };
 
   useEffect(() => {
     if (!user) {
       console.log('Utilisateur non connecté.');
-      // Si l'utilisateur n'est pas connecté, on ne fait rien
       return;
     }
-  
+
     console.log('Utilisateur connecté :', user.uid);
 
-    // Récupérer la liste des utilisateurs que l'utilisateur actuel suit
+    // Récupérer la liste des utilisateurs suivis
     const followingRef = ref(db, `following/${user.uid}`);
     onValue(followingRef, (snapshot) => {
       const data = snapshot.val() || {};
-      setFollowingList(data);
+      const uids = Object.keys(data);
+      setFollowingList(uids);
     });
-  
+
     const statusRef = ref(db, "status");
+
     const unsubscribe = onValue(statusRef, async (snapshot) => {
-      console.log('Données du nœud status :', snapshot.val());
       const utilisateurs = [];
       const promises = [];
-  
+
       snapshot.forEach((childSnapshot) => {
         const userId = childSnapshot.key;
         const status = childSnapshot.val();
-        console.log(`Utilisateur ID : ${userId}, Statut :`, status);
-  
-        // Vérifier la valeur exacte de `status.state`
-        console.log(`Status.state pour ${userId} : "${status.state}"`);
-  
+
         if (status.state === "online") {
           // Récupérer les informations de l'utilisateur
           const userRef = ref(db, `users/${userId}`);
@@ -73,10 +44,8 @@ function ListeUtilisateursEnLigne() {
             .then((userSnapshot) => {
               if (userSnapshot.exists()) {
                 const userData = userSnapshot.val();
-                console.log(`Données de l'utilisateur ${userId} :`, userData);
                 utilisateurs.push({ uid: userId, username: userData.username });
               } else {
-                console.log(`Aucune donnée trouvée pour l'utilisateur ${userId}`);
                 utilisateurs.push({
                   uid: userId,
                   username: "Utilisateur inconnu",
@@ -90,19 +59,61 @@ function ListeUtilisateursEnLigne() {
               );
             });
           promises.push(promise);
-        } else {
-          console.log(`L'utilisateur ${userId} n'est pas en ligne.`);
         }
       });
-  
+
       await Promise.all(promises);
-      console.log('Utilisateurs en ligne récupérés :', utilisateurs);
       setUtilisateursEnLigne(utilisateurs);
     });
-  
+
     return () => unsubscribe();
   }, [user]);
-  
+
+  // Fonction pour suivre un utilisateur
+  const suivreUtilisateur = async (uidUtilisateurSuivi) => {
+    try {
+      const uidSuiveur = user.uid;
+
+      // Mettre à jour le nœud 'following' de l'utilisateur actuel
+      const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
+      await set(followingRef, true);
+
+      // Mettre à jour le nœud 'followers' de l'utilisateur suivi
+      const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
+      await set(followersRef, true);
+
+      // Mettre à jour l'état local
+      setFollowingList((prevList) => [...prevList, uidUtilisateurSuivi]);
+
+      toast.success(`Vous suivez maintenant ${uidUtilisateurSuivi}`);
+    } catch (error) {
+      console.error(`Erreur lors du suivi de l'utilisateur ${uidUtilisateurSuivi} :`, error);
+      toast.error("Une erreur est survenue lors du suivi de l'utilisateur.");
+    }
+  };
+
+  // Fonction pour ne plus suivre un utilisateur
+  const nePlusSuivreUtilisateur = async (uidUtilisateurSuivi) => {
+    try {
+      const uidSuiveur = user.uid;
+
+      // Supprimer du nœud 'following' de l'utilisateur actuel
+      const followingRef = ref(db, `following/${uidSuiveur}/${uidUtilisateurSuivi}`);
+      await remove(followingRef);
+
+      // Supprimer du nœud 'followers' de l'utilisateur suivi
+      const followersRef = ref(db, `followers/${uidUtilisateurSuivi}/${uidSuiveur}`);
+      await remove(followersRef);
+
+      // Mettre à jour l'état local
+      setFollowingList((prevList) => prevList.filter(uid => uid !== uidUtilisateurSuivi));
+
+      toast.info(`Vous ne suivez plus ${uidUtilisateurSuivi}`);
+    } catch (error) {
+      console.error(`Erreur lors de la désinscription de l'utilisateur ${uidUtilisateurSuivi} :`, error);
+      toast.error("Une erreur est survenue lors de la désinscription.");
+    }
+  };
 
   // Fonction pour naviguer vers le profil de l'utilisateur
   const afficherProfil = (uid) => {
@@ -117,7 +128,7 @@ function ListeUtilisateursEnLigne() {
       ) : (
         <ul className="list-unstyled">
           {utilisateursEnLigne.map((utilisateur) => {
-            const estSuivi = followingList[utilisateur.uid];
+            const estSuivi = followingList.includes(utilisateur.uid);
 
             return (
               <li key={utilisateur.uid}>

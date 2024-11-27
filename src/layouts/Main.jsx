@@ -1,18 +1,23 @@
+// Main.jsx
+
 import { Outlet } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "../store/AuthProvider";
-import ClipLoader from "react-spinners/ClipLoader";
+import Sidebar from "../components/Sidebar";
+import ListeUtilisateursEnLigne from "../pages/ListeUtilisateursEnLigne";
 
-export default function Main() {
-  // Variables
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <ClipLoader />
+function Main() {
+  return (
+    <div className="app-container d-flex">
+      <div className="col-2 p-0">
+        <Sidebar />
       </div>
-    );
-  }
-  return <div><Outlet /></div>;
+      <div className="flex-grow-1 p-0">
+        <Outlet /> {/* Contenu principal */}
+      </div>
+      <div className="col-2 p-0">
+        <ListeUtilisateursEnLigne />
+      </div>
+    </div>
+  );
 }
+
+export default Main;

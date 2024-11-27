@@ -1,3 +1,5 @@
+// App.jsx
+
 import { useContext, Suspense, lazy, useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { db } from './firebase'; // Chemin vers votre configuration Firebase
@@ -8,8 +10,6 @@ import { AuthContext } from "./store/AuthProvider";
 import AuthProvider from "./store/AuthProvider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Sidebar from "./components/Sidebar";
-import ListeUtilisateursEnLigne from "./pages/ListeUtilisateursEnLigne";
 
 // Lazy loading des composants
 const Inscription = lazy(() => import("./pages/Inscription"));
@@ -23,11 +23,7 @@ const TweetBox = lazy(() => import("./components/TweetBox")); // Ajout de TweetB
 export default function App() {
   return (
     <AuthProvider>
-      <div className="col-2 p-0">
-        <Sidebar />
-        </div>
       <MainApp />
-      
     </AuthProvider>
   );
 }
@@ -91,7 +87,7 @@ function MainApp() {
         router={createBrowserRouter([
           {
             path: "/",
-            element: <Main />,
+            element: <Main />, // Utilisation du composant Main pour la mise en page
             children: [
               {
                 path: "/",

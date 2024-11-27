@@ -9,7 +9,10 @@ import { ref, push, onValue, orderByChild, query } from 'firebase/database';
 export default function TweetBox({ mode }) {
   const [tweets, setTweets] = useState([]);
   const { user } = useContext(AuthContext); // Récupérer l'utilisateur connecté
-  const [followingList, setFollowingList] = useState([]); // Liste des utilisateurs suivis
+  const [followingList, setFollowingList] = useState(null); // Liste des utilisateurs suivis, initialisée à null
+
+  console.log('TweetBox - user:', user);
+  console.log('TweetBox - mode:', mode);
 
   // Fonction pour ajouter un nouveau tweet
   const addTweet = async (tweetContenu) => {
@@ -28,6 +31,7 @@ export default function TweetBox({ mode }) {
     try {
       const tweetsRef = ref(db, 'tweets');
       await push(tweetsRef, tweetData);
+      console.log('Tweet ajouté avec succès:', tweetData);
     } catch (error) {
       console.error("Erreur lors de l'ajout du tweet :", error);
     }
@@ -35,21 +39,44 @@ export default function TweetBox({ mode }) {
 
   // Récupérer la liste des utilisateurs suivis (uniquement en mode 'abonnement')
   useEffect(() => {
-    if (!user || mode !== 'abonnement') return;
-
+    console.log('Début du useEffect pour récupérer followingList');
+    console.log('Valeur de user:', user);
+    console.log('Valeur de mode:', mode);
+    if (!user || mode !== 'abonnement') {
+      console.log('Condition non satisfaite : user ou mode');
+      setFollowingList([]);
+      return;
+    }
+  
+    console.log('Conditions satisfaites, récupération de followingList');
     const followingRef = ref(db, `following/${user.uid}`);
-    const unsubscribe = onValue(followingRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const uids = Object.keys(data);
-      setFollowingList(uids);
-    });
-
+    const unsubscribe = onValue(
+      followingRef,
+      (snapshot) => {
+        console.log('onValue appelé pour followingRef');
+        const data = snapshot.val() || {};
+        const uids = Object.keys(data);
+        console.log('Données brutes de following:', data);
+        console.log('Liste des utilisateurs suivis :', uids);
+        setFollowingList(uids);
+      },
+      (error) => {
+        console.error('Erreur lors de la récupération de followingList:', error);
+      }
+    );
+  
     return () => unsubscribe();
   }, [user, mode]);
+  
 
   // Récupérer les tweets depuis Realtime Database
   useEffect(() => {
     if (!user) return;
+
+    if (mode === 'abonnement' && followingList === null) {
+      // Attendre que followingList soit chargée
+      return;
+    }
 
     const tweetsRef = ref(db, 'tweets');
     const tweetsQuery = query(tweetsRef, orderByChild('date'));
