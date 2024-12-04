@@ -15,103 +15,93 @@ export default function TweetBox({ mode }) {
   console.log('TweetBox - mode:', mode);
 
   // Fonction pour ajouter un nouveau tweet
-  const addTweet = async (tweetContenu) => {
-    if (!user) {
-      // Gérer le cas où l'utilisateur n'est pas connecté
-      alert("Vous devez être connecté pour tweeter.");
-      return;
-    }
-    const tweetData = {
-      id: Date.now(), // Identifiant unique basé sur le timestamp
-      contenu: tweetContenu,
-      date: Date.now(),
-      username: user.displayName || user.email,
-      uid: user.uid,
-    };
-    try {
-      const tweetsRef = ref(db, 'tweets');
-      await push(tweetsRef, tweetData);
-      console.log('Tweet ajouté avec succès:', tweetData);
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du tweet :", error);
-    }
+  // Fonction pour ajouter un nouveau tweet
+const addTweet = async (tweetContenu) => {
+  if (!user) {
+    alert("Vous devez être connecté pour tweeter.");
+    return;
+  }
+  console.log('Utilisateur actuel :', user);
+  const tweetData = {
+    contenu: tweetContenu,
+    date: Date.now(),
+    username: user.displayName || user.email,
+    uid: user.uid,
   };
+  console.log('Données du tweet avant envoi :', tweetData);
+  try {
+    const tweetsRef = ref(db, 'tweets');
+    await push(tweetsRef, tweetData);
+    console.log('Tweet ajouté avec succès:', tweetData);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du tweet :", error);
+  }
+};
+
 
   // Récupérer la liste des utilisateurs suivis (uniquement en mode 'abonnement')
   useEffect(() => {
-    console.log('Début du useEffect pour récupérer followingList');
-    console.log('Valeur de user:', user);
-    console.log('Valeur de mode:', mode);
-    if (!user || mode !== 'abonnement') {
-      console.log('Condition non satisfaite : user ou mode');
-      setFollowingList([]);
-      return;
-    }
-  
-    console.log('Conditions satisfaites, récupération de followingList');
+    if (mode !== 'abonnement' || !user) return;
+
     const followingRef = ref(db, `following/${user.uid}`);
-    const unsubscribe = onValue(
-      followingRef,
-      (snapshot) => {
-        console.log('onValue appelé pour followingRef');
-        const data = snapshot.val() || {};
-        const uids = Object.keys(data);
-        console.log('Données brutes de following:', data);
-        console.log('Liste des utilisateurs suivis :', uids);
-        setFollowingList(uids);
-      },
-      (error) => {
-        console.error('Erreur lors de la récupération de followingList:', error);
+    onValue(followingRef, (snapshot) => {
+      const followingData = snapshot.val();
+      if (followingData) {
+        const followingArray = Object.keys(followingData);
+        setFollowingList(followingArray);
+      } else {
+        setFollowingList([]);
       }
-    );
-  
-    return () => unsubscribe();
+    }, (error) => {
+      console.error('Erreur lors de la récupération de la liste des suivis:', error);
+    });
   }, [user, mode]);
-  
 
   // Récupérer les tweets depuis Realtime Database
   useEffect(() => {
-    if (!user) return;
-
-    if (mode === 'abonnement' && followingList === null) {
-      // Attendre que followingList soit chargée
-      return;
+    let unsubscribe = () => {
+      console.log('Aucun listener à désabonner.');
+    };
+    if (!user) {
+      console.log('Utilisateur non authentifié, désabonnement du listener.');
+      // Si l'utilisateur n'est pas authentifié, nous devons nettoyer le listener précédent
+      return () => {
+        unsubscribe();
+      };
     }
-
+    console.log('Mise en place du listener pour les tweets');
     const tweetsRef = ref(db, 'tweets');
     const tweetsQuery = query(tweetsRef, orderByChild('date'));
-    const unsubscribe = onValue(tweetsQuery, (snapshot) => {
-      const tweetsData = [];
-      snapshot.forEach((childSnapshot) => {
-        const tweet = childSnapshot.val();
-
-        // Filtrer les tweets en fonction du mode
-        if (tweet.contenu && tweet.username) {
-          if (mode === 'abonnement') {
-            // Mode 'abonnement' : afficher les tweets des utilisateurs suivis
-            if (followingList.includes(tweet.uid)) {
-              tweetsData.push({
-                id: childSnapshot.key,
-                ...tweet,
-              });
-            }
-          } else {
-            // Mode 'actu' : afficher tous les tweets
-            tweetsData.push({
-              id: childSnapshot.key,
-              ...tweet,
-            });
-          }
-        }
-      });
-      // Tri des tweets par date décroissante
-      tweetsData.sort((a, b) => b.date - a.date);
-      setTweets(tweetsData);
-    });
-
-    // Nettoyer l'abonnement lors du démontage
-    return () => unsubscribe();
+    unsubscribe = onValue(
+      tweetsQuery,
+      (snapshot) => {
+        console.log('Listener onValue appelé suite à une modification des tweets');
+        const tweetsData = [];
+        snapshot.forEach((childSnapshot) => {
+          const tweet = childSnapshot.val();
+          tweetsData.push({
+            id: childSnapshot.key, // Utiliser la clé Firebase comme 'id'
+            ...tweet,
+          });
+        });
+        // Tri des tweets par date décroissante
+        tweetsData.sort((a, b) => b.date - a.date);
+        console.log('Tweets après mise à jour :', tweetsData);
+        setTweets(tweetsData);
+      },
+      (error) => {
+        console.error('Erreur lors de la récupération des tweets:', error);
+      }
+    );
+  
+    return () => {
+      console.log('Désabonnement du listener pour les tweets');
+      unsubscribe();
+    };
   }, [user, mode, followingList]);
+  
+  
+  
 
   return (
     <div className='container my-4'>
@@ -134,8 +124,6 @@ export default function TweetBox({ mode }) {
             <Tweet
               key={tweet.id}
               tweet={tweet}
-              supprimerTweet={() => {}}
-              modifierTweet={() => {}}
             />
           ))
         )}

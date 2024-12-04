@@ -1,15 +1,22 @@
-import React, { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../store/AuthProvider';
 import { db } from '../firebase';
 import { ref, update, onValue, push, remove } from 'firebase/database';
 
 function Tweet({ tweet }) {
-  console.log('tweet.id:', tweet.id);
+  console.log('Tweet component rendered. tweet.id:', tweet.id);
   const [enEdition, setEnEdition] = useState(false);
   const [nouveauContenu, setNouveauContenu] = useState(tweet.contenu);
   const [commentaire, setCommentaire] = useState('');
   const [comments, setComments] = useState([]);
   const { user } = useContext(AuthContext);
+  const estAuteur = user && user.uid === tweet.uid;
+
+  // Synchroniser 'nouveauContenu' lorsque 'tweet.contenu' change
+  useEffect(() => {
+    console.log('Le composant Tweet a été re-rendu pour le tweet :', tweet.id);
+    setNouveauContenu(tweet.contenu);
+  }, [tweet.contenu]);
 
   // Charger les commentaires du tweet
   useEffect(() => {
@@ -47,7 +54,7 @@ function Tweet({ tweet }) {
       contenu: commentaire,
       date: Date.now(),
       username: user.displayName || user.email,
-      userId: user.uid,
+      uid: user.uid,
     };
 
     try {
@@ -64,8 +71,8 @@ function Tweet({ tweet }) {
   };
 
   // Fonction pour supprimer un tweet
-  const supprimerTweet = async () => {
-    if (!user || user.uid !== tweet.userId) {
+  const supprimerLeTweet = async () => {
+    if (!user || user.uid !== tweet.uid) {
       alert("Vous ne pouvez pas supprimer ce tweet.");
       return;
     }
@@ -73,24 +80,31 @@ function Tweet({ tweet }) {
     try {
       const tweetRef = ref(db, `tweets/${tweet.id}`);
       await remove(tweetRef);
+      console.log(`Tweet ${tweet.id} supprimé avec succès`);
     } catch (error) {
       console.error("Erreur lors de la suppression du tweet :", error);
     }
   };
 
   // Fonction pour modifier un tweet
-  const modifierTweet = async () => {
-    if (!user || user.uid !== tweet.userId) {
+  const modifierLeTweet = async () => {
+    if (!user || user.uid !== tweet.uid) {
       alert("Vous ne pouvez pas modifier ce tweet.");
       return;
     }
 
     try {
       const tweetRef = ref(db, `tweets/${tweet.id}`);
-      await update(tweetRef, { contenu: nouveauContenu });
+      await update(tweetRef, {
+        contenu: nouveauContenu,
+        date: Date.now(), // Met à jour la date de modification
+        // Ne pas inclure 'uid' ici
+      });
       setEnEdition(false);
+      console.log(`Tweet ${tweet.id} modifié avec succès`);
     } catch (error) {
       console.error("Erreur lors de la modification du tweet :", error);
+      alert("Erreur lors de la modification du tweet : " + error.message);
     }
   };
 
@@ -104,11 +118,6 @@ function Tweet({ tweet }) {
     <div className="card mb-3">
       <div className="card-body">
         <div className="d-flex">
-          {/* <img
-            src="https://via.placeholder.com/50"
-            alt="Profil"
-            className="rounded-circle me-3"
-          /> */}
           <div className="w-100">
             <div className="d-flex justify-content-between">
               <h5 className="card-title mb-1">{tweet.username}</h5>
@@ -128,7 +137,7 @@ function Tweet({ tweet }) {
                 <div className="mt-2 text-end">
                   <button
                     className="btn btn-primary me-2"
-                    onClick={modifierTweet}
+                    onClick={modifierLeTweet}
                     disabled={!nouveauContenu.trim()}
                   >
                     Sauvegarder
@@ -142,11 +151,11 @@ function Tweet({ tweet }) {
               <>
                 <p className="card-text">{tweet.contenu}</p>
                 <div className="mt-2 d-flex">
-                  {user && user.uid === tweet.userId && (
+                  {estAuteur && (
                     <>
                       <button
                         className="btn btn-outline-danger btn-sm me-2"
-                        onClick={supprimerTweet}
+                        onClick={supprimerLeTweet}
                       >
                         Supprimer
                       </button>

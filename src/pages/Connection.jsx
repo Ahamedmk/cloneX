@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useForm } from "react-hook-form";
@@ -14,41 +14,33 @@ export default function Connection() {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const { loginUser, verifyUserSetup, loading } = useContext(AuthContext);
+  const { loginUser, newUser, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [localLoading, setLocalLoading] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      console.log("Utilisateur connecté, redirection en cours...");
+      // if (newUser) {
+        navigate("/?success=true");
+      // } else {
+      //   navigate("/journal");
+      // }
+    }
+  }, [user, newUser, navigate]);
+
   const onSubmit = async (data) => {
-    if (localLoading || loading) return;
+    if (localLoading) return;
 
     setLocalLoading(true);
 
     try {
       console.log("Tentative de connexion avec", data.email);
-      const user = await loginUser(data.email, data.password); // Connexion de l'utilisateur
-
-      if (user) {
-        console.log("Utilisateur connecté avec succès :", user);
-
-        // Vérifie si l'utilisateur a complété sa configuration
-        const isSetupComplete = await verifyUserSetup(user);
-        console.log(
-          "Vérification de la configuration terminée :",
-          isSetupComplete
-        );
-
-        setLocalLoading(false);
-
-        // Redirection selon isSetupComplete
-        if (isSetupComplete) {
-          navigate("/journal");
-        } else {
-          navigate("/?success=true");
-        }
-      }
+      await loginUser(data.email, data.password);
+      console.log("Utilisateur connecté avec succès");
+      // Le useEffect se chargera de la redirection
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
-      setLocalLoading(false);
       const { code } = error;
 
       // Gestion des erreurs de connexion
@@ -59,6 +51,8 @@ export default function Connection() {
       } else {
         toast.error("Erreur lors de la connexion.");
       }
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -73,7 +67,7 @@ export default function Connection() {
               type="email"
               placeholder="Entrez votre email"
               {...register("email", {
-                required: true,
+                required: "L'email est requis.",
                 pattern: {
                   value:
                     /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -93,7 +87,7 @@ export default function Connection() {
               type="password"
               placeholder="Entrez votre mot de passe"
               {...register("password", {
-                required: true,
+                required: "Le mot de passe est requis.",
                 minLength: {
                   value: 8,
                   message:
@@ -111,11 +105,9 @@ export default function Connection() {
             variant="primary"
             type="submit"
             className="w-100 connection-button"
-            disabled={localLoading || loading}
+            disabled={localLoading}
           >
-            {localLoading || loading
-              ? "Connexion en cours..."
-              : "Se connecter"}
+            {localLoading ? "Connexion en cours..." : "Se connecter"}
           </Button>
         </Form>
 
